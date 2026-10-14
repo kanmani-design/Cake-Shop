@@ -1,0 +1,16 @@
+import { Router } from 'express'; import bcrypt from 'bcryptjs'; import jwt from 'jsonwebtoken'; import rateLimit from 'express-rate-limit'; import { z } from 'zod';
+import { User } from '../models/index.js'; import { h, fail, protect } from '../utils/http.js';
+const r = Router(), limiter = rateLimit({ windowMs: 15 * 60e3, limit: 20, standardHeaders: true, legacyHeaders: false });
+const cookie = { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 7 * 864e5 };
+const pub = u => ({ id: u._id, name: u.name, email: u.email, phone: u.phone, role: u.role });
+const send = (res, u, code = 200) => { res.cookie('token', jwt.sign({ id: u._id }, process.env.JWT_SECRET, { expiresIn: '7d' }), cookie); res.status(code).json({ success: true, user: pub(u) }); };
+const reg = z.object({ name: z.string().trim().min(2).max(80), email: z.string().trim().email(), password: z.string().min(8).max(100), phone: z.string().trim().max(20).optional() });
+r.post('/register', limiter, h(async (req, res) => { const d = reg.parse(req.body);
+  if (await User.exists({ email: d.email.toLowerCase() })) throw fail(409, 'Email already registered');
+  send(res, await User.create({ ...d, password: await bcrypt.hash(d.password, 12), role: 'customer' }), 201); }));
+r.post('/login', limiter, h(async (req, res) => { const d = z.object({ email: z.string().email(), password: z.string().min(1) }).parse(req.body);
+  const u = await User.findOne({ email: d.email.toLowerCase() }).select('+password');
+  if (!u || !(await bcrypt.compare(d.password, u.password))) throw fail(401, 'Invalid email or password'); send(res, u); }));
+r.post('/logout', (_q, res) => { res.clearCookie('token', cookie); res.json({ success: true }); });
+r.get('/me', protect, (req, res) => res.json({ success: true, user: pub(req.user) }));
+export default r;

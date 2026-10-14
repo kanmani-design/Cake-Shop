@@ -1,0 +1,5 @@
+@tailwind base; @tailwind components; @tailwind utilities;
+@layer base { body { @apply bg-cream text-cocoa-900 font-sans antialiased overflow-x-hidden; } h1,h2,h3 { @apply font-display text-cocoa-900; } :focus-visible { @apply outline-2 outline-offset-2 outline-cocoa-700; } }
+@layer components { .btn { @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-medium transition disabled:opacity-50; } .btn-primary { @apply btn bg-cocoa-700 text-white hover:bg-cocoa-900; } .btn-soft { @apply btn bg-blush-100 text-cocoa-900 hover:bg-blush-300; }
+  .input { @apply w-full rounded-xl border border-blush-300 bg-white px-4 py-3 focus:border-cocoa-700; } .card { @apply rounded-3xl bg-white shadow-sm; } .wrap { @apply mx-auto w-full max-w-6xl px-4 sm:px-6; } .err { @apply mt-1 text-sm text-red-700; } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
